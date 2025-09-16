@@ -1,0 +1,200 @@
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #212529;
+    --card-bg: #ffffff;
+    --card-header-bg: #198754;
+    --card-header-text: #ffffff;
+    --border-color: #dee2e6;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --muted-text: #6c757d;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #e9ecef;
+    --card-bg: #2d2d2d;
+    --card-header-bg: #198754;
+    --card-header-text: #ffffff;
+    --border-color: #495057;
+    --input-bg: #343a40;
+    --input-border: #495057;
+    --muted-text: #adb5bd;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.card-header {
+    background-color: var(--card-header-bg);
+    color: var(--card-header-text);
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.form-control {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.form-control:focus {
+    background-color: var(--input-bg);
+    border-color: #198754;
+    color: var(--text-color);
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+.form-text {
+    color: var(--muted-text) !important;
+}
+
+/* Placeholder text styling */
+.form-control::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+}
+
+.btn-primary {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #157347;
+    border-color: #146c43;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.text-muted {
+    color: var(--muted-text) !important;
+}
+
+.round-info {
+    flex-grow: 1;
+}
+
+.round-rating {
+    font-weight: bold;
+    color: #198754;
+    margin-left: 1rem;
+}
+
+.badge {
+    font-size: 0.875em;
+    padding: 0.5em 0.75em;
+}
+
+#currentRating {
+    font-size: 1em;
+}
+
+.import-success {
+    color: #198754;
+    font-weight: 500;
+}
+
+.import-error {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* Dark Mode Toggle Button */
+#darkModeToggle {
+    border: 2px solid #343a40;
+    color: #ffffff;
+    background-color: #343a40;
+    transition: all 0.3s ease;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+}
+
+#darkModeToggle:hover {
+    background-color: #495057;
+    border-color: #495057;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode button styling */
+[data-theme="dark"] #darkModeToggle {
+    border: 2px solid #f8f9fa;
+    color: #212529;
+    background-color: #f8f9fa;
+}
+
+[data-theme="dark"] #darkModeToggle:hover {
+    background-color: #e9ecef;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+#darkModeIcon {
+    font-size: 1.2rem;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+#darkModeToggle:hover #darkModeIcon {
+    transform: scale(1.1);
+}
+
+/* PDGA Table Data Textarea */
+#pdgaTableData {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    resize: both;
+    min-height: 120px;
+    max-height: 400px;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+
+/* Make the import card wider on larger screens */
+@media (min-width: 768px) {
+    .import-card {
+        min-width: 100%;
+    }
+    
+    #pdgaTableData {
+        min-width: 100%;
+        width: 100%;
+    }
+}
