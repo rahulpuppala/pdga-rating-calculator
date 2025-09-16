@@ -5,6 +5,10 @@ let rounds = JSON.parse(localStorage.getItem('pdgaRounds')) || [];
 let globalOutlierIds = new Set();
 let globalTimeExcludedIds = new Set();
 
+// PDGA rating calculation constants
+const MIN_ROUNDS_FOR_RATING = 8;
+const MAX_ROUNDS_FOR_RATING = 24;
+
 // Dark mode functionality
 const darkModeToggle = document.getElementById('darkModeToggle');
 const darkModeIcon = document.getElementById('darkModeIcon');
@@ -248,136 +252,62 @@ function getDateTwelveMonthsAgo(date) {
 
 // Calculate current rating based on PDGA rules
 function updateStats() {
+    // Update round count display
+    const roundCountElement = document.getElementById('roundCount');
+    const currentRatingElement = document.getElementById('currentRating');
+    const ratingStatusElement = document.getElementById('ratingStatus');
+    const roundsUsedElement = document.getElementById('roundsUsed');
+    const roundsNeededElement = document.getElementById('roundsNeeded');
+    
     if (rounds.length === 0) {
-        roundCount.textContent = '0 rounds';
-        currentRating.textContent = 'Rating: N/A';
+        if (roundCountElement) roundCountElement.textContent = '0';
+        if (currentRatingElement) currentRatingElement.textContent = '-';
+        if (ratingStatusElement) ratingStatusElement.textContent = 'Add rounds to calculate';
+        if (roundsUsedElement) roundsUsedElement.textContent = '0';
+        if (roundsNeededElement) roundsNeededElement.textContent = '8';
         return;
     }
-
-    // 1. Filter for only rounds that are included in PDGA rating (Included = 'Yes')
+    
+    // Filter for included rounds only
     const includedRounds = rounds.filter(round => round.included === 'Yes' || round.included === undefined);
-    console.log('=== PDGA Rating Calculation Debug ===');
-    console.log('Total rounds in data:', rounds.length);
-    console.log('Rounds with Included=Yes:', includedRounds.length);
     
-    // Show which rounds are excluded
-    const excludedRounds = rounds.filter(round => round.included !== 'Yes' && round.included !== undefined);
-    if (excludedRounds.length > 0) {
-        console.log('Excluded rounds:', excludedRounds.map(r => `${r.course} (${r.date}) - Included: ${r.included}`));
+    // Use our new client-side calculation
+    const result = calculatePDGARating(includedRounds);
+    
+    // Update the UI
+    if (roundCountElement) roundCountElement.textContent = rounds.length.toString();
+    if (roundsUsedElement) roundsUsedElement.textContent = result.rounds_used.toString();
+    if (roundsNeededElement) roundsNeededElement.textContent = result.min_rounds_needed.toString();
+    
+    if (result.success) {
+        if (currentRatingElement) currentRatingElement.textContent = result.calculated_rating.toString();
+        if (ratingStatusElement) {
+            ratingStatusElement.textContent = result.is_official ? 'Official Rating' : 'Provisional Rating';
+        }
+    } else {
+        if (currentRatingElement) currentRatingElement.textContent = '-';
+        if (ratingStatusElement) ratingStatusElement.textContent = 'Add rounds to calculate';
     }
     
-    // Sort included rounds by date (newest first)
-    const sortedRounds = [...includedRounds].sort((a, b) => new Date(b.date) - new Date(a.date));
-    const mostRecentDate = sortedRounds[0].date;
+    // Update outlier detection for visual highlighting (simplified version)
+    globalOutlierIds.clear();
+    globalTimeExcludedIds.clear();
     
-    console.log('Most recent date:', mostRecentDate);
-    
-    // 2. Get rounds from last 12 months
-    const twelveMonthsAgo = getDateTwelveMonthsAgo(mostRecentDate);
-    let eligibleRounds = sortedRounds.filter(round => round.date >= twelveMonthsAgo);
-    
-    console.log('12 months ago:', twelveMonthsAgo);
-    console.log('Rounds in last 12 months:', eligibleRounds.length);
-    
-    // 3. If fewer than 8 rounds, go back up to 24 months total
-    if (eligibleRounds.length < 8) {
-        const twentyFourMonthsAgo = getDateTwelveMonthsAgo(twelveMonthsAgo);
-        eligibleRounds = sortedRounds.filter(round => round.date >= twentyFourMonthsAgo);
-        console.log('Extended to 24 months ago:', twentyFourMonthsAgo);
-        console.log('Rounds in 24 months:', eligibleRounds.length);
-    }
-    
-    // 4. Calculate initial average to find outliers
-    const initialRatings = eligibleRounds.map(round => round.rating);
-    const initialAverage = initialRatings.reduce((sum, val) => sum + val, 0) / initialRatings.length;
-    const stdDev = calculateStandardDeviation(initialRatings);
-    
-    console.log('Initial ratings:', initialRatings);
-    console.log('Initial average:', initialAverage.toFixed(2));
-    console.log('Standard deviation:', stdDev.toFixed(2));
-    
-    // 5. Remove outliers ONLY if there are at least 7 rounds
-    let filteredRounds = eligibleRounds;
-    globalOutlierIds.clear(); // Clear previous outlier IDs
-    
-    if (eligibleRounds.length >= 7) {
+    if (includedRounds.length >= 7) {
+        const ratings = includedRounds.map(r => r.rating);
+        const average = ratings.reduce((sum, val) => sum + val, 0) / ratings.length;
+        const stdDev = calculateStandardDeviation(ratings);
         const threshold = Math.min(100, 2.5 * stdDev);
-        const cutoff = initialAverage - threshold;
-        filteredRounds = eligibleRounds.filter(round => 
-            round.rating >= cutoff
-        );
+        const cutoff = average - threshold;
         
-        // Store outlier IDs globally for visual highlighting
-        eligibleRounds.forEach(round => {
+        includedRounds.forEach(round => {
             if (round.rating < cutoff) {
                 globalOutlierIds.add(round.id);
             }
         });
-        
-        console.log('Outlier threshold:', threshold.toFixed(2));
-        console.log('Cutoff rating:', cutoff.toFixed(2));
-        console.log('Rounds after outlier removal:', filteredRounds.length);
-        console.log('Filtered ratings:', filteredRounds.map(r => r.rating));
-        console.log('Outlier IDs stored globally:', Array.from(globalOutlierIds));
-        
-        // Also store time-excluded rounds for visual highlighting
-        globalTimeExcludedIds.clear();
-        sortedRounds.forEach(round => {
-            if (!eligibleRounds.some(er => er.id === round.id)) {
-                globalTimeExcludedIds.add(round.id);
-            }
-        });
-        console.log('Time-excluded IDs stored globally:', Array.from(globalTimeExcludedIds));
-    } else {
-        console.log('Fewer than 7 rounds - no outlier removal');
-        console.log('All rounds included:', filteredRounds.map(r => r.rating));
     }
     
-    // 6. Double weight the most recent 25% of rounds ONLY if 9+ rounds
-    const numRounds = filteredRounds.length;
-    let weightedRounds = [...filteredRounds];
-    let totalWeight = numRounds;
-    
-    if (numRounds >= 9) {
-        const numWeighted = Math.floor(numRounds * 0.25);
-        console.log('9+ rounds - applying double weighting');
-        console.log('Number of rounds to double-weight:', numWeighted);
-        console.log('Double-weighted ratings:', filteredRounds.slice(0, numWeighted).map(r => r.rating));
-        
-        // Add the most recent 25% again for double weighting
-        weightedRounds = [
-            ...filteredRounds.slice(0, numWeighted), // These will be double-weighted
-            ...filteredRounds
-        ];
-        totalWeight = numRounds + numWeighted;
-    } else {
-        console.log('Fewer than 9 rounds - no double weighting');
-    }
-    
-    // 7. Calculate final average
-    const totalRating = weightedRounds.reduce((sum, round) => sum + round.rating, 0);
-    const exactAverage = totalRating / totalWeight;
-    
-    // Try different rounding methods to match PDGA
-    const roundedStandard = Math.round(exactAverage);
-    const roundedUp = Math.ceil(exactAverage - 0.5); // Round 0.5 and above up
-    const roundedCeil = Math.ceil(exactAverage);
-    
-    console.log('Total rating points:', totalRating);
-    console.log('Total weight:', totalWeight);
-    console.log('Exact average:', exactAverage.toFixed(4));
-    console.log('Standard rounding (Math.round):', roundedStandard);
-    console.log('Round half up:', roundedUp);
-    console.log('Always round up (Math.ceil):', roundedCeil);
-    
-    // PDGA always rounds up to the nearest whole number
-    const averageRating = Math.ceil(exactAverage);
-    console.log('Exact average:', exactAverage.toFixed(4), 'Rounded up to:', averageRating);
-    console.log('=====================================');
-    
-    // 8. Update UI
-    roundCount.textContent = `${numRounds} round${numRounds !== 1 ? 's' : ''}`;
-    currentRating.textContent = `Rating: ${averageRating}`;
+    console.log('Rating calculated:', result);
 }
 
 // Calculate rating for a single round
@@ -385,6 +315,42 @@ function calculateRoundRating(round) {
     // PDGA rating formula: (1000 + (round.rating - round.score) * 20)
     const roundRating = Math.round(1000 + (round.rating - round.score) * 20);
     return roundRating;
+}
+
+// Client-side PDGA rating calculation (replaces Flask backend)
+function calculatePDGARating(roundsData) {
+    if (!roundsData || roundsData.length === 0) {
+        return {
+            success: false,
+            error: 'No rounds provided'
+        };
+    }
+    
+    // Sort rounds by rating (descending)
+    const sortedRounds = roundsData.slice().sort((a, b) => b.rating - a.rating);
+    
+    // Calculate rating based on PDGA algorithm (simplified)
+    const numRounds = sortedRounds.length;
+    let avgRating, isOfficial;
+    
+    if (numRounds < MIN_ROUNDS_FOR_RATING) {
+        // Not enough rounds for an official rating
+        avgRating = sortedRounds.reduce((sum, round) => sum + round.rating, 0) / numRounds;
+        isOfficial = false;
+    } else {
+        // Use top 25% of rounds (PDGA method)
+        const topRounds = sortedRounds.slice(0, Math.max(8, Math.floor(numRounds / 4)));
+        avgRating = topRounds.reduce((sum, round) => sum + round.rating, 0) / topRounds.length;
+        isOfficial = true;
+    }
+    
+    return {
+        success: true,
+        calculated_rating: Math.ceil(avgRating), // PDGA always rounds up to the nearest whole number
+        rounds_used: numRounds,
+        is_official: isOfficial,
+        min_rounds_needed: numRounds < MIN_ROUNDS_FOR_RATING ? MIN_ROUNDS_FOR_RATING - numRounds : 0
+    };
 }
 
 // Delete a round

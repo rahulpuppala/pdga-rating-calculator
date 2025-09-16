@@ -1,0 +1,17 @@
+{
+  "name": "pdga-rating-calculator",
+  "version": "1.0.0",
+  "description": "PDGA Rating Calculator - A static web application to calculate your PDGA rating",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rahulpuppala/pdga-rating-calculator.git"
+  },
+  "keywords": ["pdga", "disc-golf", "rating", "calculator"],
+  "author": "",
+  "license": "MIT"
+}
