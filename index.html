@@ -96,6 +96,12 @@
                             <label for="pdgaNumber" class="form-label">PDGA Number</label>
                             <input type="number" class="form-control" id="pdgaNumber" placeholder="Enter your PDGA number">
                         </div>
+                        <div class="mb-3">
+                            <small class="text-muted">Try these players:</small><br>
+                            <button type="button" class="btn btn-outline-info btn-sm me-2" onclick="document.getElementById('pdgaNumber').value='75412'">Gannon Buhr (#75412)</button>
+                            <button type="button" class="btn btn-outline-info btn-sm me-2" onclick="document.getElementById('pdgaNumber').value='35449'">Aaron Gossage (#35449)</button>
+                            <button type="button" class="btn btn-outline-info btn-sm" onclick="document.getElementById('pdgaNumber').value='273758'">Rahul Puppala (#273758)</button>
+                        </div>
                         <button id="importBtn" class="btn btn-secondary me-2">Import Rounds</button>
                         <button id="clearAllBtn" class="btn btn-danger">Clear All Rounds</button>
                         <div id="importStatus" class="mt-3"></div>
@@ -110,8 +116,9 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Your Rounds</h5>
                         <div class="rating-info">
-                            <span class="badge bg-primary me-2">Current Rating: <span id="currentRating">N/A</span></span>
-                            <span class="badge bg-secondary" id="roundCount">0 rounds</span>
+                            <span class="badge bg-primary me-2">Rating: <span id="currentRating">N/A</span></span>
+                            <span class="badge bg-info me-2">Used: <span id="roundsUsed">0</span>/<span id="roundCount">0</span></span>
+                            <span class="badge bg-warning" id="ratingStatus">Add rounds</span>
                         </div>
                     </div>
                     <div class="card-body">
